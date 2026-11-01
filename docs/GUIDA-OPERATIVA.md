@@ -50,6 +50,11 @@ Convenzioni solidale (non reinventare):
 - **Screenshot con login**: il proxy chiede auth se `.env.local` ha credenziali;
   per gli screenshot spostare temporaneamente `.env.local` → `.env.local.bak`,
   poi RIpristinare.
+- **Submodule `public/media`**: le path media lunghe rompono il checkout con
+  "Filename too long" → `git config core.longpaths true` **dentro** il submodule;
+  l'origin è il clone locale (`C:/Users/Stefy/Documents/Dev/orchard`) → i
+  fetch/pull dagli script hanno bisogno di
+  `git -c protocol.file.allow=always ...` (fissa CVE di git sul transport file).
 - **auth test prod** (routine): start con env su porta 3002 →
   senza login 401 · sbagliate 401 · corrette 200 · `/media/x` senza login 401.
 
