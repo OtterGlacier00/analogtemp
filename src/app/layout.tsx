@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "SwiftVault", template: "%s · SwiftVault" },
+  title: { default: "Applecore", template: "%s · Applecore" },
   description: "Archivio personale dei corsi Swift di Sean Allen, con progressi e note.",
 };
 
@@ -28,7 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <div className="mx-auto w-full max-w-[980px] px-5 pt-5 pb-10">
           <header className="flex flex-wrap items-baseline gap-3.5 mb-7">
             <Link href="/" className="text-xl font-extrabold tracking-[0.3px] text-accent hover:no-underline">
-              Swift&nbsp;Vault
+              Applecore
             </Link>
             <span className="text-sm text-muted">archivio personale · corsi Sean Allen</span>
           </header>
