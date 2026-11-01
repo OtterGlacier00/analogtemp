@@ -1,15 +1,29 @@
-# PIANO TANSTACK — SwiftVault (25 ott 2026)
+# PIANO TANSTACK — Applecore (25 ott 2026, up. 1 nov 2026)
 
 > Ricerca fatta su tanstack.com (Start **1.0 stabile** dal 13/10/2026).
-> **DECISIONE (25/10 sera): drop di Next** — Vercel è Gold partner TanStack e
-> percorso deploy **documentato ufficialmente** nelle guide Start (via Nitro).
+> **DECISIONE (25/10 sera): drop di Next** — percorso deploy **documentato
+> ufficialmente** nelle guide Start (via Nitro).
 > Migrazione a **TanStack Start in React** PRIMA del primo deploy.
 > Inventario librerie verificato live il 25/10/2026 tramite registry npm
 > (versioni esistenti di ogni package React/Solid).
+>
+> **Aggiornamento 1 nov 2026**:
+> 1. **Hosting: CLOUDFLARE** (era Vercel) → Workers + R2 binding per i
+>    media; dettagli in §Architettura deploy (sostituisce la tabella
+>    pro/contro Vercel)
+> 2. **Regola procedurale**: lo scaffold della CLI va fatto **in una
+>    cartella vuota SEPARATA** (es.
+>    `C:\Users\Stefy\Documents\Dev\applecore-start`), mai dentro il repo
+>    dell'app: l'app ha già una struttura piena (src, public/media
+>    submodule, script, config) e far girare la CLI lì dentro produce un
+>    merge messy (duplicati, conflitti di struttura, file scaffold misti
+>    al legacy) → si genera pulito fuori, poi si copiano i pezzi
+>    dell'app nell'albero nuovo lato per lato.
+>    Applicato ai §Migrazione step 0/2 e §Adozione step 1.
 
 ## Inventario completo sul sito — disponibilità React / Solid (verificato npm)
 
-| Libreria | Categoria | Versione React | Versione Solid | SwiftVault |
+| Libreria | Categoria | Versione React | Versione Solid | Applecore |
 |---|---|---|---|---|
 | **Start** | framework | 1.169.4 ✓ | 1.169.4 ✓ | ✅ IL framework (React) |
 | **Router** | framework | 1.170.46 ✓ | 1.170.43 ✓ | ✅ file-based + search-params |
@@ -34,10 +48,12 @@ versioni rilevate in npm), le altre 3 (AI / Markdown / Highlight) sono Vanilla
 → usabili da entrambi. La parità React/Solid è completa: un eventuale port
 futuro tocca solo le componenti UI.
 
-## Percorso di adozione: React su Vercel (con l'ordine degli step)
+## Percorso di adozione: React su Cloudflare (con l'ordine degli step)
 
-1. **CLI** `npx @tanstack/cli create` — scaffold del progetto (step 0 della
-   migrazione)
+1. **CLI** `npx @tanstack/cli create` — scaffold del progetto in **una
+   cartella vuota separata** (MAI dentro il repo dell'app, vedi nota del
+   1 nov in cima al file); i pezzi dell'app migrano fra i due alberi
+   (step 0 della migrazione)
 2. **Start + Router** — `vite.config`: `[tanstackStart(), nitro(), viteReact()]`;
    route file-based `src/routes/`: `/` · `/c/$course` ·
    `/c/$course/$module/$lesson`; search-params type-safe per deep-link
@@ -59,7 +75,7 @@ futuro tocca solo le componenti UI.
 
 ### Le NON adottate (e perché)
 
-- **DB** (beta): no server API in SwiftVault — ripescabile per un futuro
+- **DB** (beta): no server API in Applecore — ripescabile per un futuro
   sync client-server
 - **Table / Form**: nessuna griglia o form nell'app (uso personale)
 - **AI**: vanilla, nessun use-case
@@ -98,7 +114,8 @@ branding. Nel port si sostituisce con tutta materia propria app:
 - **logout** per svuotare il cookie (piccolo bottone nel hub)
 - compatibilità: Basic Auth continua a valere come fallback se il cookie
   non c'è (per client tipo download tool), come oggi
-- `SESSION_SECRET` entra in env di Vercel assieme a SITE_USER/SITE_PASS
+- `SESSION_SECRET` entra nelle secrets del Worker Cloudflare assieme a
+  SITE_USER/SITE_PASS (`npx wrangler secret put …`)
 
 Buon motivo per attivare **frontend-design** durante step 5: la landing e
 il hub meritano identità visiva propria (palette del sito corsi, tipografia
@@ -112,11 +129,14 @@ uguale con Vite. Ordine previsto:
 1. **Media finiti e committati** (swap AV1 → commit launchpad/swiftui →
    catalogo): così la migrazione parte da un albero pulito e tematico.
    Subito dopo: **find-skills** a caccia di skill utili (step 0)
-2. **Scaffold**: `pnpm add @tanstack/react-start @tanstack/react-router
+2. **Scaffold**: inizializzato con la CLI **in cartella vuota separata**
+   (es. `C:\Users\Stefy\Documents\Dev\applecore-start`), poi si copiano i
+   pezzi nel nuovo albero man a mano. Dipendenze:
+   `pnpm add @tanstack/react-start @tanstack/react-router
    nitro @vitejs/plugin-react`; `vite.config.ts`:
    `plugins: [tanstackStart(), nitro(), viteReact()]` +
-   `@tailwindcss/vite` (Tailwind 4 rimane; il PostCSS lascia il posto
-   al Vite plugin)
+   `@tailwindcss/vite` (Tailwind 4 resta; il PostCSS lascia il posto
+   al Vite plugin). Preset deploy: `cloudflare` (Nitro) per il Workers.
 3. **Routes**: `src/routes/` file-based (App Router → Router):
    `/` (dashboard) · `/c/$course` (corso) · `/c/$course/$module/$lesson`
    (lezione + player). `next/link` → `Link`, `useParams`/`useSearchParams` →
@@ -124,9 +144,10 @@ uguale con Vite. Ordine previsto:
 4. **Auth, versione moderna**: niente più prompt nativo 401 (quello stile
    "pagina di configurazione router"). Route pubblica `/login` con form →
    server function valida `SITE_USER`/`SITE_PASS` → **session cookie
-   firmato**; il middleware protegge le route dell'app. I media sono sul
-   **secondo progetto** (repo separato): si accedono con **URL firmate
-   HMAC** generate dall'app (dettagli §Architettura deploy). Vedasi
+   firmato**; il middleware protegge le route dell'app. I media sul
+   Worker via **R2 binding**, route interna protetta dallo stesso cookie
+   (niente secondo progetto niente HMAC, vedi §Login: homescreen
+   pubblica e §Architettura deploy). Vedasi
    [§ Login: homescreen pubblica]
 5. **Componenti**: UI passa quasi intatta (client components senza direttive
    "use client"; `next/head` → `<head>` di Start; niente `next/image`)
@@ -137,39 +158,43 @@ uguale con Vite. Ordine previsto:
    A verifica verde: **frontend-design** SOLO se la UI merita un ritocco
    durante il port; **improve-codebase-architecture** post-migrazione
    (l'utente lo invoca a mano)
-8. **Deploy Vercel** (o prima push e poi import): env vars
-   `SITE_USER`, `SITE_PASS`, `SESSION_SECRET`, test post-deploy
-   come da `STATO-PROGETTO` §Deploy (401 → ora redirect a `/login`)
+8. **Deploy Cloudflare** (o prima push e poi import): preset Nitro
+   `cloudflare` → `wrangler deploy`; secrets `SITE_USER`, `SITE_PASS`,
+   `SESSION_SECRET`; R2 binding `MEDIA` (bucket es. `orchard`) per la
+   route media; test post-deploy come da `STATO-PROGETTO` §Deploy
+   (401 → redirect a `/login`)
 
 Stima: mezza giornata. Trade-off accettato: rinuncio a React Compiler
 (legato a Next); il resto (Tailwind, TS, pnpm) sale senza attriti.
 
-## Architettura deploy: due repo — layout Vercel DA ACTUALIZZARE al port (25/10)
+## Architettura deploy: Cloudflare Workers + R2 (DECISO 1 nov 2026)
 
-Split deciso: **solo i video sono uso personale** → repo media separato
-privato (`swiftvault-media` su GitHub, submodule del repo codice) e il repo
-codice diventa **public**. COME Vercel consuma i media al deploy: decisione
-APERTA da prendere durante la migrazione — due varianti fattibili:
+L'hosting è Cloudflare (era il piano Vercel: la tabella pro/contro
+"1 app + GH_TOKEN" vs "2 progetti + HMAC" è **abbandonata**). 1 solo Worker:
 
-| | A. 1 app + fetch build-time | B. 2 progetti + URL firmate |
-|---|---|---|
-| Domini | **1** (app) | 2 (app + media) |
-| Login | cookie moderno, solo | cookie moderno + HMAC sui media |
-| Deploy codice (ogni push) | re-fetch/re-upload ~8 GB media | solo app, veloce |
-| Deploy media | spinge il submodule push | solo il repo media |
-| Secret | fine-grained `GH_TOKEN` (env Vercel) | `MEDIA_SIGN_SECRET` (su 2 progetti) |
-| Note | Vercel NON monta i submodule privati → step build `fetch-media.mjs` con token | cookie non viaggia `*.vercel.app` (PSL) → HMAC generato dall'app, media project 404 senza token |
+| Pezzo | Decisione |
+|---|---|
+| App | TanStack Start 1.0 React, Nitro preset `cloudflare`, `wrangler deploy` |
+| Media | bucket **R2** (es. `orchard`), binding es. `MEDIA` nel config; route interna che streamma da R2 **solo col cookie di sessione valido** |
+| Login | cookie firmato (`SESSION_SECRET`) = unico controllo, app e media su 1 dominio: niente copia cookie cross-dominio, niente URL firmate HMAC |
+| Repo media | `orchard` (private, `OtterCloud00/orchard`) resta la **sorgente** per lo sviluppo locale (submodule su `public/media`); in produzione la fonte dei media è R2 — nei deploy CF il submodule NON viene montato |
+| Secrets | `SITE_USER`, `SITE_PASS`, `SESSION_SECRET` (wrangler secret put) |
+| Costi | Workers free tier + R2: 10 GB gratis, Class B (read) fisse; egress 0 — larghissimo margine per uso personale |
 
-- 1 progetto Vercel per repo; entrambi Hobby free; banda condivisa
-  d'account (limiti soft ~100 GB/mese: ok per uso personale)
-- Media repo root = i corsi (`widgetkit/`, `ios-dev-launchpad/`, ...), mount
-  submodule su `public/media`
-- **Repo public va prima ripulito della history media**:
-  `git filter-repo --path public/media --invert-paths`
-  (WidgetKit AV1 committata non può stare in un repo public), poi push pulito
-- Cloudflare resta opzione di PORT futuro: preset Workers ufficiale con R2
-  binding nello stesso worker (1 dominio, cookie, zero egress) — il port
-  resta mezza giornata
+- **Repo public**: `github.com/OtterCloud00/AppleCore` già pulito di media
+  (filter-repo fatto), submodule su `public/media` per lo sviluppo locale
+  (catalogo e dev), R2 per il deploy
+- I media si caricano su R2 in un colpo (`orchard` → bucket), poi update
+  incrementale solo dei corsi nuovi
+- Storia: il repo media non va più spinto a GitHub a ogni video dopo il
+  prossimo aggiornamento module su R2: si decide a quel punto se `orchard`
+  resta backup/git-archive o continua a sincronizzare
+
+> Come già per Vercel (e per lo stesso motivo): **i deploy cloudflare
+> confezionano solo il repo codice app, i submodule non vengono montati**
+> → i media vivono in **R2** (binding), unico modo per averli protetti da
+> cookie su un solo dominio. L'URL pubblica `pub-XXXX.r2.dev` resta
+> scartata (valutazioni precedenti valide).
 
 ## Regole d'oro
 

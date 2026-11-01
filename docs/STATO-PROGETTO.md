@@ -1,16 +1,26 @@
-# STATO PROGETTO — SwiftVault
+# STATO PROGETTO — Applecore
 
 > Documento di handoff: da leggere a inizio sessione (umano o agente).
-> Ultimo aggiornamento: 25 ottobre 2026.
+> Ultimo aggiornamento: 1 novembre 2026.
+
+> ⚠️ Cambio nome (1 nov 2026): l'app si chiama **Applecore** (ex SwiftVault).
+> Repo aggiornati: codice → `github.com/OtterCloud00/AppleCore` (public),
+> media → **`orchard`** (es-SwiftVault, ex-stvt-media) su GitHub
+> (`github.com/OtterCloud00/orchard`, private) e in locale in
+> `C:\Users\Stefy\Documents\Dev\orchard`. Il backup pre-filtro rimane
+> `swiftvault-backup-prefilter.git` (nome storico, da eliminare quando tutto
+> è verificato). Le chiavi localStorage restano `hub:*`.
 
 ## Missione essenziale
 
-App web **TanStack Start 1.0 React** (migrata da Next.js 16 — decisione
-25/10/2026: Vercel Gold partner TanStack, drop Next, deploy Vercel via Nitro;
-dettagli e percorso in `TANSTACK-PLAN.md`; `create-next-app` base originale:
-src/, Tailwind 4, TS, pnpm). Sostituisce la scuola Teachable di Sean Allen
-(chiusa il **24 novembre 2026**). Video scaricati e dentro il repo privato,
-app deployata con Basic Auth su Vercel. Zero costi, uso personale.
+App web attualmente su **Next.js 16** (base `create-next-app`: src/,
+Tailwind 4, TS, pnpm). **Decisa e NON ancora eseguita** la migrazione a
+**TanStack Start 1.0 React** (decisione 25/10/2026 + hosting **Cloudflare**
+Workers: dettagli in `TANSTACK-PLAN.md`, percorso 8 step; scaffold con la
+CLI TanStack in cartella vuota separata). Sostituisce la scuola Teachable
+di Sean Allen (chiusa il **24 novembre 2026**). Video scaricati e dentro
+la repo privata `orchard` (submodule), app serverless su CF Workers con
+auth moderna. Zero costi, uso personale.
 
 ⚠️ **Licenza**: materiali per uso personale; vietato esporli pubblicamente
 (no mirror su server): per questo il hub richiede credenziali e la strategia
@@ -65,9 +75,11 @@ valutate e scartate: Content ID/strike e lock-in).
   dopo 6×HTTP 408 (upload lungi >500MB non reggono) — la repo privata GitHub
   `swiftvault-media` risulta ormai inesistente/raggiungibile (non spingere
   più). Stato finale:
-  - **Repo media locale**: `C:\Users\Stefy\Documents\Dev\swiftvault-media`
-    (48 commit tematici, 4 corsi: widgetkit, ios-dev-launchpad,
-    swiftui-fundamentals + ebook how-i-became → **solo essa**, tree pulita)
+  - **Repo media locale**: `C:\Users\Stefy\Documents\Dev\orchard`
+    (es-`swiftvault-media` / `stvt-media`; rinominato 1 nov 2026, remote
+    aggiornato su `github.com/OtterCloud00/orchard`; principali commit
+    tematici, corsi: widgetkit, ios-dev-launchpad, swiftui-fundamentals +
+    ebook how-i-became → **solo essa**, tree pulita)
   - **`git filter-repo --path public/media --invert-paths --force` ESEGUITO**
     sul code repo: **zero** path media in tutta la history (46→39 ref,
     7 commit solo-media potati); backup pre-filtro (mirror, hardlink) in
@@ -100,28 +112,38 @@ Due strade valutate a suo tempo:
 GitHub: file singoli < 100 MB, repo privato consigliato ≤ ~5 GB.
 Attuale ~1.5 GB → quando superiamo comodamente 3–4 GB (o push lenti):
 
-**Migrazione a Cloudflare R2** (10 GB gratis, egress gratis):
-1. bucket + abilita Public Development URL → `https://pub-XXXX.r2.dev`
-2. `pnpm catalog -- --course <id> --folder "public\media\<id>" --base https://pub-XXXX.r2.dev/<id>`
-3. su Vercel è già tutto ok: gli src cambiano solo nel catalog.json
-   (il proxy non protege R2: le URL r2.dev sono raggiungibili da chi ne ha l'URL
-   → accettare o passare a domain privato+token; da decidere eventualmente:
-   le alternative private costo $ sono state escluse).
+**Migrazione a Cloudflare R2** (10 GB gratis, egress gratis) — col hosting
+CF deciso è la strada naturale: **bucket + R2 binding nel Worker**, NON
+l'URL pubblica `pub-XXXX.r2.dev`:
 
-## Framework: TanStack Start (decisione 25/10/2026 — drop di Next)
+1. bucket R2 (es. `orchard`) + caricare le cartelle dei corsi
+2. binding nel `wrangler` config (es. `MEDIA` → bucket) → il Worker serve
+   i media su una route interna (autenticata col cookie: 1 dominio, zero
+   URL pubbliche, ripescate le valutazioni anti-r2.dev)
+3. `pnpm catalog -- --course <id> --folder "public\media\<id>" --base /media/<id>`
+   (route interna invece del blob storage: il catalogo non cambia semantica,
+   cambia solo chi risponde)
+
+## Framework: TanStack Start (decisione 25/10/2026 — drop di Next; migrazione DA FARE)
 
 Prima la regola era condizionale ("se hosting Cloudflare → TanStack Start,
 mai Next+OpenNext"). **Ora è incondizionale**: si droppa Next e si migra a
 **TanStack Start 1.0 React** prima del primo deploy, perché:
 
-- Vercel è **Gold partner** TanStack e il deploy Vercel è **documentato**
-  nelle guide Start (via plugin `nitro/vite` — caveat: Nitro layer "under
-  active development", rischio accettato per un'app semplice)
-- Un'unica codebase amica di qualunque hosting futuro (CF preset ufficiale
+- **Hosting deciso: Cloudflare** → il deploy "Cloudflare" è uno dei percorsi
+  first-party di Start (Nitro preset `cloudflare` → Workers), e 1 Worker
+  unico serve app **e** media via **R2 binding** nello stesso processo:
+  login a cookie + media protetti sullo stesso dominio, senza secondo progetto
+- Un'unica codebase amica di qualunque hosting futuro (preset CF ufficiale
   = spostamento mezza giornata)
 - Da 1.0 STABILE (13/10/2026) con docs anche per **Solid** (eventuale port
   futuro UI-only, non richiesto ora)
 - **Piano di migrazione in 8 step: `TANSTACK-PLAN.md`** (mezza giornata)
+- ⚠️ **Regola procedurale (1 nov 2026)**: lo scaffold venga generato con la
+  CLI TanStack **in una cartella vuota separata** (es.
+  `C:\Users\Stefy\Documents\Dev\applecore-start`), MAI dentro il repo
+  dell'app: copiare/spostare codice in un albero pulito dall'esterno
+  (→ istruzioni in `TANSTACK-PLAN.md` §Migrazione step 0/2)
 
 - Cosa si ricicla: `catalog.json` e tutti gli script, player/resume/progressi
   (localStorage = client-side, identico), Tailwind 4, componenti UI
@@ -134,24 +156,28 @@ mai Next+OpenNext"). **Ora è incondizionale**: si droppa Next e si migra a
   Next-on-Workers in 12 mesi. Non è il ponte: è un clone sperimentale.
   Decisione utente, definitiva.
 
-## Deploy (da fare dopo Migrazione — 2 repo; layout Vercel da decidere al port)
+## Deploy su Cloudflare (decisione 1 nov 2026 — dopo la migrazione)
 
-1. **Ripulire la history media** di `swiftvault`:
-   `git filter-repo --path public/media --invert-paths` (WidgetKit AV1
-   committata non va in un repo public) — dopo: repo PUBLIC
-2. **Repo `swiftvault-media`** (private `OtterGlacier00/swiftvault-media`,
-   root = corsi): widgetkit push, poi launchpad e swiftui a fine AV1;
-   si aggiungerà come **submodule** in `public/media`
-3. **Repo public già creato dall'utente**: `https://github.com/OtterGlacier00/SwiftVault`
-   (ha un commit iniziale con **LICENSE**: alla prima push merger —
-   `git merge --allow-unrelated-histories origin/main` — per NON perderla)
-3. Vercel: **una o due varianti a scelta durante il port** (tabella
-   pro/contro in `TANSTACK-PLAN.md` §Architettura deploy):
-   - A: 1 app + `fetch-media.mjs` build-time con `GH_TOKEN` fine-grained
-   - B: 2 progetti + URL firmate HMAC (`MEDIA_SIGN_SECRET` x2)
-   env sempre: `SITE_USER`, `SITE_PASS`, `SESSION_SECRET` (+ variante)
-   (⚠️ `.env.local` attuale usa le demo `stefy/test`: CAMBIARE prima del deploy)4. Test post-deploy: `/` pubblica → login moderno; con login → 200;
-   media accessibili solo da app autenticata (cookie o URL firmata)
+1. ~~Ripulire la history media~~ **FATTO** (filter-repo eseguito: zero path
+   media nel repo codice) e repo codice = **PUBLIC**:
+   `github.com/OtterCloud00/AppleCore` (repo rinominato in giu il 1 nov;
+   remote locale già aggiornato; mergiare la LICENSE iniziale alla prima
+   push con `git merge --allow-unrelated-histories origin/main` se
+   convivessero le due history)
+2. **Repo media = `orchard`** (private `OtterCloud00/orchard`,
+   root = corsi; cartella locale `C:\Users\Stefy\Documents\Dev\orchard`;
+   submodule montato su `public/media`, commit `43d60c1`)
+3. **Hosting = Cloudflare Workers** (1 worker):
+   - deploy con Nitro preset `cloudflare` + `wrangler deploy`
+   - **R2 binding** per i media (bucket es. `orchard`, binding es. `MEDIA`)
+     serviti da route interna autenticata dal cookie ⇒ 1 dominio, un solo
+     login, niente URL firmate/secondo progetto (tomba le varianti "1 app +
+     GH_TOKEN" / "2 progetti + HMAC" del piano Vercel)
+   - env/secrets sul Worker: `SITE_USER`, `SITE_PASS`, `SESSION_SECRET`
+     (`npx wrangler secret put …`) — niente dev-consente-aperto in prod
+   (⚠️ `.env.local` attuale usa le demo `stefy/test`: CAMBIARE prima del deploy)
+4. Test post-deploy: `/` → login moderno; con login → 200; media via R2
+   solo da app autenticata (cookie); 401/redirect senza login
 
 ## Decisione media: AV1 **solo necessari** (25 ott 2026, rivista sera)
 
@@ -190,14 +216,19 @@ CPU i3-2100: ~75 fps (2,5x realtime) → un file grande ~7-8 min.
       esterni su 136 lezioni, zero unmatched)
 - [ ] `pnpm run build` → OK → commit catalogo/docs
 - [ ] **Migrazione Next → TanStack Start React** (8 step in `TANSTACK-PLAN.md`:
-      scaffold Vite/Nitro, `src/routes/`, auth middleware, remove Next) →
+      scaffold con la CLI TanStack **in cartella vuota separata** (mai dentro
+      il repo dell'app), `src/routes/`, auth middleware, remove Next) →
       build OK locale
-- [ ] **Split repo**: `swiftvault-media` privato (root = corsi) + **submodule**
-      su `public/media` + `git filter-repo` per togliere i media dalla
-      history + push su **github.com/OtterGlacier00/SwiftVault** (public;
-      LICENSE dell'utente da PRESERVARE via merge unrelated-histories)
-- [ ] Push GitHub (repo public — gh già autenticato: OtterGlacier00) +
-      deploy Vercel in versione A o B a scelta durante il port
+- [x] **Split repo FATTO**: media su `orchard` (private, es-swiftvault-media)
+      + sottomodulo su `public/media` ripristinato (commit `43d60c1`) +
+      `git filter-repo` eseguito + repo codice rinominato su GitHub:
+      **github.com/OtterCloud00/AppleCore** (public; la LICENSE iniziale va
+      preservata via `git merge --allow-unrelated-histories origin/main`
+      alla prima push, se l'utente la tiene)
+- [ ] Ultimi pass di commit media launchpad/swiftui (elenco su) → push `orchard`
+- [ ] Push GitHub repo codice su OtterCloud00/AppleCore + deploy
+      **Cloudflare Workers** (Nitro preset `cloudflare`, bucket R2 `orchard`
+      con binding, secrets `SITE_USER`/`SITE_PASS`/`SESSION_SECRET`)
       (⚠️ cambiare password demo `stefy/test` PRIMA del deploy)
 - [ ] Test post-deploy: `/` → login moderno; route → 200 col cookie;
       media solo dopo autenticazione

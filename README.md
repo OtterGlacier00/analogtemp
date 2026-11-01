@@ -1,4 +1,4 @@
-# SwiftVault — archivio personale dei corsi di Sean Allen
+# Applecore — archivio personale dei corsi di Sean Allen
 
 Un'app web **privata e gratuita** che sostituisce la scuola Teachable di Sean Allen
 (il sito chiuderà il **24 novembre 2026**), usando i video che scarichi prima di quella data.
@@ -85,7 +85,8 @@ Tipi di lezione riconosciuti: `video` (.mp4/.mov/.m4v/.webm), `pdf` (.pdf),
 Limiti da conoscere (Windows/GitHub):
 - GitHub rifiuta **file singoli > 100 MB** (i video di Sean quasi sempre stanno sotto)
 - Repo privato: limiti software di ~5 GB; per il piano di Studio completa ci sta
-- Vercel Hobby: ~100 GB di bandwidth/mese — ben oltre l'uso personale
+- I media di produzione non vengono dal repo: in deploy il submodule non
+  viene montato → vedi §5 (R2 su Cloudflare)
 
 ### Se un giorno servisse più spazio: Cloudflare R2 (10 GB gratis)
 
@@ -95,16 +96,25 @@ Limiti da conoscere (Windows/GitHub):
 4. Basta rieseguire lo script con
    `--base https://pub-xxxxxxxx.r2.dev/widgetkit`: **zero modifiche al codice**
 
-## 5. Deploy su Vercel (gratis)
+## 5. Deploy su Cloudflare (gratis)
 
-1. Pusha il repo su GitHub (il repo git locale è già inizializzato da create-next-app)
-2. Su [vercel.com](https://vercel.com) → *Import project* → seleziona il repo
-3. **Environment Variables** (OBBLIGATORIE in produzione):
-   - `SITE_USER` = username di accesso
-   - `SITE_PASS` = password di accesso
-4. Deploy. Il sito chiede le credenziali al primo accesso, poi le ricorda.
-   **Se non le imposti in produzione il sito risponde "500 missing SITE_USER"**
-   invece di mostrare il contenuto per sbaglio.
+1. Pusha il repo su GitHub: **github.com/OtterCloud00/AppleCore**
+   (i media stanno su `OtterCloud00/orchard`, repo private, submodule di
+   `public/media` per lo sviluppo locale)
+2. Su Cloudflare → **Workers**: build col **preset `cloudflare` di Nitro**
+   e `wrangler deploy` (L'app e le API/serverless in un solo Worker)
+3. **Secrets** sul Worker (OBBLIGATORIE in produzione):
+   ```powershell
+   npx wrangler secret put SITE_USER
+   npx wrangler secret put SITE_PASS
+   npx wrangler secret put SESSION_SECRET
+   ```
+4. **Bucket R2** con i media (es. bucket `orchard`, binding `MEDIA`):
+   la route media del Worker streamma da R2 **solo a sessione valida** —
+   1 dominio, cookie unico, niente URL pubbliche
+5. Deploy. Il sito chiede le credenziali al primo accesso, poi le ricorda
+   col cookie di sessione. **Se non imposti i secrets il contenuto non
+   viene mai esposto.**
 
 ## 6. Manutenzione
 

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 /**
  * Protezione del sito con Basic Auth (convenzione "proxy" di Next.js 16,
  * ex middleware). Le credenziali sono le variabili d'ambiente SITE_USER e SITE_PASS.
- * Su Vercel: Settings > Environment Variables > SITE_USER e SITE_PASS.
+ * Su Cloudflare i segreti si impostano con `npx wrangler secret put SITE_USER` (e SITE_PASS).
  *
  * In sviluppo locale (pnpm dev), senza credenziali impostate, il sito resta
  * aperto per comodità; in produzione senza credenziali risponde con errore,
@@ -16,7 +16,7 @@ export function proxy(req: NextRequest) {
   if (!user || !pass) {
     if (process.env.NODE_ENV === "development") return NextResponse.next();
     return new NextResponse(
-      "Credenziali non configurate: imposta SITE_USER e SITE_PASS su Vercel.",
+      "Credenziali non configurate: imposta i secrets SITE_USER e SITE_PASS sul sito (wrangler secret put).",
       { status: 500 }
     );
   }
@@ -32,7 +32,7 @@ export function proxy(req: NextRequest) {
 
   return new NextResponse("Accesso riservato all'utente autorizzato.", {
     status: 401,
-    headers: { "WWW-Authenticate": 'Basic realm="swiftvault", charset="utf-8"' },
+    headers: { "WWW-Authenticate": 'Basic realm="applecore", charset="utf-8"' },
   });
 }
 
