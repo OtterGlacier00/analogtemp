@@ -51,10 +51,12 @@ Convenzioni solidale (non reinventare):
   per gli screenshot spostare temporaneamente `.env.local` → `.env.local.bak`,
   poi RIpristinare.
 - **Submodule `public/media`**: le path media lunghe rompono il checkout con
-  "Filename too long" → `git config core.longpaths true` **dentro** il submodule;
-  l'origin è il clone locale (`C:/Users/Stefy/Documents/Dev/orchard`) → i
-  fetch/pull dagli script hanno bisogno di
-  `git -c protocol.file.allow=always ...` (fissa CVE di git sul transport file).
+  "Filename too long" → `git config core.longpaths true` **dentro** il
+  submodule. L'url è GitHub (`https://github.com/OtterCloud00/orchard.git`,
+  `branch = main`): per portare il submodule su un commit nuovo basta
+  `git submodule update --remote public/media`; chi clona il repo codice
+  senza accesso a orchard (repo private) vede `public/media` vuota — per
+  sviluppo locale usare l'update col token gh collegato.
 - **auth test prod** (routine): start con env su porta 3002 →
   senza login 401 · sbagliate 401 · corrette 200 · `/media/x` senza login 401.
 

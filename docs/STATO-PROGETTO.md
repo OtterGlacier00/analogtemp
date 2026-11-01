@@ -85,8 +85,10 @@ valutate e scartate: Content ID/strike e lock-in).
     7 commit solo-media potati); backup pre-filtro (mirror, hardlink) in
     `C:\Users\Stefy\Documents\Dev\swiftvault-backup-prefilter.git`
     → eliminare quando tutto è verificato
-  - **Submodule locale** su `public/media` → url file locale, NON un remoto
-    GitHub: la history pubblica non contiene media e non li scarica
+  - **Submodule** su `public/media` → url **GitHub** (`https://github.com/
+    OtterCloud00/orchard.git`, `branch = main`, agg. 1 nov 2026 — prima era
+    un path locale). Il repo public contiene solo il puntatore, non i media:
+    chi clona senza accesso a orchard vede la cartella vuota
   - ⚠️ ref `refs/t3/orchestration-v2/checkpoints/*` (8) puntano al vecchio
     history: **non spingerle mai**; push pubblico solo della ref `main`
   - mapping "lezione ↔ allegato" **FATTO** automatico (`331adbc`,
@@ -166,7 +168,7 @@ mai Next+OpenNext"). **Ora è incondizionale**: si droppa Next e si migra a
    convivessero le due history)
 2. **Repo media = `orchard`** (private `OtterCloud00/orchard`,
    root = corsi; cartella locale `C:\Users\Stefy\Documents\Dev\orchard`;
-   submodule montato su `public/media`, commit `43d60c1`)
+   submodule montato su `public/media`, url GitHub, pin `c1349ae`)
 3. **Hosting = Cloudflare Workers** (1 worker):
    - deploy con Nitro preset `cloudflare` + `wrangler deploy`
    - **R2 binding** per i media (bucket es. `orchard`, binding es. `MEDIA`)
@@ -220,7 +222,8 @@ CPU i3-2100: ~75 fps (2,5x realtime) → un file grande ~7-8 min.
       il repo dell'app), `src/routes/`, auth middleware, remove Next) →
       build OK locale
 - [x] **Split repo FATTO**: media su `orchard` (private, es-swiftvault-media)
-      + sottomodulo su `public/media` ripristinato (commit `43d60c1`) +
+      + sottomodulo su `public/media` ripristinato e collegato a GitHub
+      (pin `c1349ae`) +
       `git filter-repo` eseguito + repo codice rinominato su GitHub:
       **github.com/OtterCloud00/AppleCore** (public; la LICENSE iniziale va
       preservata via `git merge --allow-unrelated-histories origin/main`

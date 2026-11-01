@@ -1,3 +1,4 @@
 [submodule "public/media"]
 	path = public/media
-	url = C:/Users/Stefy/Documents/Dev/orchard
+	url = https://github.com/OtterCloud00/orchard.git
+	branch = main
